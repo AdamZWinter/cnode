@@ -1,0 +1,22 @@
+{ "resultcode": "201", "networkMagic": "764824073", "ipType":4, "Producers": [ 
+  { "addr": "44.235.17.233", "port": 6000, "valency": 1, "distance":14,  "continent":"NA",  "country":"US",  "region":"OR" },
+  { "addr": "138.68.16.179", "port": 6000, "valency": 1, "distance":953,  "continent":"NA",  "country":"US",  "region":"CA" },
+  { "addr": "34.123.216.8", "port": 3101, "valency": 1, "distance":1976,  "continent":"NA",  "country":"US",  "region":"IA" },
+  { "addr": "cshrelays.cryptostakehouse.com", "port": 3001, "valency": 2, "distance":2428,  "continent":"NA",  "country":"US",  "region":"TX" },
+  { "addr": "3.20.137.144", "port": 3001, "valency": 1, "distance":3025,  "continent":"NA",  "country":"US",  "region":"OH" },
+  { "addr": "3.236.234.165", "port": 6000, "valency": 1, "distance":3497,  "continent":"NA",  "country":"US",  "region":"VA" },
+  { "addr": "35.243.158.137", "port": 3001, "valency": 1, "distance":3647,  "continent":"NA",  "country":"US",  "region":"SC" },
+  { "addr": "kiblocrelays.asuscomm.com", "port": 8084, "valency": 1, "distance":3714,  "continent":"NA",  "country":"US",  "region":"VA" },
+  { "addr": "13.49.90.255", "port": 3001, "valency": 1, "distance":7692,  "continent":"EU",  "country":"SE",  "region":"AB" },
+  { "addr": "95.216.187.53", "port": 6002, "valency": 1, "distance":7762,  "continent":"EU",  "country":"FI",  "region":"18" },
+  { "addr": "77.251.189.27", "port": 3001, "valency": 1, "distance":7889,  "continent":"EU",  "country":"NL",  "region":"ZH" },
+  { "addr": "139.64.236.125", "port": 36796, "valency": 1, "distance":7958,  "continent":"AS",  "country":"US",  "region":"13" },
+  { "addr": "85.214.125.163", "port": 6000, "valency": 1, "distance":8185,  "continent":"EU",  "country":"DE",  "region":"BE" },
+  { "addr": "18.159.31.176", "port": 3000, "valency": 1, "distance":8231,  "continent":"EU",  "country":"DE",  "region":"HE" },
+  { "addr": "94.130.99.102", "port": 7030, "valency": 1, "distance":8388,  "continent":"EU",  "country":"DE",  "region":"BY" },
+  { "addr": "135.181.31.85", "port": 3001, "valency": 1, "distance":8406,  "continent":"EU",  "country":"DE",  "region":"BY" },
+  { "addr": "161.97.83.141", "port": 4001, "valency": 1, "distance":8534,  "continent":"EU",  "country":"DE",  "region":"BY" },
+  { "addr": "213.181.208.13", "port": 4601, "valency": 1, "distance":8879,  "continent":"EU",  "country":"HU",  "region":"BU" },
+  { "addr": "3.105.93.168", "port": 4001, "valency": 1, "distance":12542,  "continent":"OC",  "country":"AU",  "region":"NSW" },
+  { "addr": "180.150.116.90", "port": 3001, "valency": 1, "distance":13254,  "continent":"OC",  "country":"AU",  "region":"VIC" }
+] }

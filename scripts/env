@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034,SC2086,SC2230,SC2009,SC2206
+
+######################################
+# User Variables - Change as desired #
+# Leave as is if unsure              #
+######################################
+
+#CCLI="${HOME}/.cabal/bin/cardano-cli"                  # Override automatic detection of path to cardano-cli executable
+#CNCLI="${HOME}/.cargo/bin/cncli"                       # Override automatic detection of path to cncli executable (https://github.com/AndrewWestberg/cncli)
+#CNODE_HOME="/home/ec2-user/cnode"                        # Override default CNODE_HOME path (defaults to /home/ec2-user/cnode)
+CNODE_PORT=3001                                         # Set node port
+#CONFIG="${CNODE_HOME}/files/config.json"               # Override automatic detection of node config path
+#SOCKET="${CNODE_HOME}/sockets/node0.socket"            # Override automatic detection of path to socket
+#EKG_HOST=127.0.0.1                                     # Set node EKG host
+#EKG_PORT=12788                                         # Override automatic detection of node EKG port
+#EKG_TIMEOUT=3                                          # Maximum time in seconds that you allow EKG request to take before aborting (node metrics)
+#CURL_TIMEOUT=10                                        # Maximum time in seconds that you allow curl file download to take before aborting (GitHub update process)
+#BLOCKLOG_DIR="${CNODE_HOME}/guild-db/blocklog"         # Override default directory used to store block data for core node
+#BLOCKLOG_TZ="UTC"                                      # TimeZone to use when displaying blocklog - https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+######################################
+# Do NOT modify code below           #
+######################################
+
+OFFLINE_MODE='N'
+[[ $1 = "offline" ]] && OFFLINE_MODE='Y'
+[[ $(basename $0) = "cnode.sh" ]] && OFFLINE_MODE='Y' # for backwards compatibility
+[[ $(basename $0) = "topologyUpdater.sh" ]] && OFFLINE_MODE='Y' # for backwards compatibility
+
+export LC_ALL=C.UTF-8
+
+[[ -z ${CURL_TIMEOUT} ]] && CURL_TIMEOUT=10
+
+[[ -z "${CCLI}" ]] && CCLI=$(command -v cardano-cli)
+if [[ -z "${CCLI}" ]]; then
+  if [[ -f "${HOME}/.cabal/bin/cardano-cli" ]]; then
+    # Assumption being made that cardano-cli and cardano-node are both present, if not - prereqs and build instructions were not followed
+    export PATH="${HOME}/.cabal/bin":$PATH
+    CCLI=$(command -v cardano-cli)
+  else
+    echo "You do not have a cardano-cli binary available in \$PATH."
+    return 1
+  fi
+else
+  CCLI_PARENT="$(dirname ${CCLI})"
+  export PATH="${CCLI_PARENT}":$PATH
+fi
+
+if [[ -z "${CNCLI}" ]]; then
+  CNCLI=$(command -v cncli) || CNCLI="${HOME}/.cargo/bin/cncli"
+fi
+
+[[ -z "${CNODE_HOME}" ]] && CNODE_HOME=/opt/cardano/cnode
+
+if [[ -z "${SOCKET}" ]]; then
+  if [[ "$(ps -ef | grep "[c]ardano-node.*.${CNODE_HOME}/")" =~ --socket-path[[:space:]]([^[:space:]]+) ]]; then
+    export CARDANO_NODE_SOCKET_PATH="${BASH_REMATCH[1]}"
+  elif [[ ${OFFLINE_MODE} = "N" ]]; then
+    echo "Node socket not set in env file and automatic detection failed! [source: $(basename $0)]"
+    return 1
+  fi
+else
+  export CARDANO_NODE_SOCKET_PATH="${SOCKET}"
+fi
+
+if [[ -z "${CONFIG}" ]]; then
+  if [[ "$(ps -ef | grep "[c]ardano-node.*.${CNODE_HOME}/")" =~ --config[[:space:]]([^[:space:]]+) ]]; then
+    CONFIG=${BASH_REMATCH[1]}
+  elif [[ -f "${CNODE_HOME}/files/config.json" ]]; then
+    CONFIG="${CNODE_HOME}/files/config.json"
+  elif [[ ${OFFLINE_MODE} = "N" ]]; then
+    echo "Node config not set in env file and automatic detection failed!"
+    return 1
+  fi
+fi
+
+[[ -z ${EKG_TIMEOUT} ]] && EKG_TIMEOUT=3
+[[ -z ${EKG_HOST} ]] && EKG_HOST=127.0.0.1
+if [[ ${EKG_HOST} =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+  OIFS=$IFS
+  IFS='.'
+  EKG_OCTETS=(${EKG_HOST})
+  IFS=$OIFS
+  if ! [[ ${EKG_OCTETS[0]} -le 255 && ${EKG_OCTETS[1]} -le 255 && ${EKG_OCTETS[2]} -le 255 && ${EKG_OCTETS[3]} -le 255 ]]; then
+    echo "Not a valid IP range set for EKG host, please check env file!"
+    return 1
+  fi
+else
+  echo "Not a valid IP format set for EKG host, please check env file!"
+  return 1
+fi
+
+if [[ -z ${EKG_PORT} ]]; then
+  if ! EKG_PORT=$(jq -er '.hasEKG' "${CONFIG}" 2>/dev/null); then
+    if [[ ${OFFLINE_MODE} = "N" ]]; then
+      echo "Could not get 'hasEKG' port from the node configuration file"
+      return 1
+    fi
+  fi
+elif [[ ! ${EKG_PORT} =~ ^[0-9]+$ ]]; then
+  echo "Please set a valid EKG port number in env file!"
+  return 1
+fi
+
+if ! GENESIS_JSON=$(jq -er '.ShelleyGenesisFile' "${CONFIG}" 2>/dev/null); then
+  if [[ ${OFFLINE_MODE} = "Y" ]]; then
+    if [[ -f "${CNODE_HOME}/files/genesis.json" ]]; then
+      GENESIS_JSON="${CNODE_HOME}/files/genesis.json"
+    else
+      echo "Could not find shelley genesis file in default location or 'ShelleyGenesisFile' from the node configuration file"
+      return 1
+    fi
+  else
+    echo "Could not get 'ShelleyGenesisFile' from the node configuration file"
+    return 1
+  fi
+else
+  # if relative path is used, assume same parent dir as config
+  [[ ! ${GENESIS_JSON} =~ ^/ ]] && GENESIS_JSON="$(dirname "${CONFIG}")/${GENESIS_JSON}"
+  [[ ! -f "${GENESIS_JSON}" ]] && echo "Shelley genesis file not found: ${GENESIS_JSON}" && return 1
+fi
+
+if ! BYRON_GENESIS_JSON=$(jq -er '.ByronGenesisFile' "${CONFIG}" 2>/dev/null); then
+  if [[ ${OFFLINE_MODE} = "Y" ]]; then
+    if [[ -f "${CNODE_HOME}/files/genesis.json" ]]; then
+      GENESIS_JSON="${CNODE_HOME}/files/genesis.json"
+    else
+      echo "Could not find byron genesis file in default location or 'ByronGenesisFile' from the node configuration file"
+      return 1
+    fi
+  else
+    echo "Could not get 'ByronGenesisFile' from the node configuration file"
+    return 1
+  fi
+else
+  # if relative path is used, assume same parent dir as config
+  [[ ! ${BYRON_GENESIS_JSON} =~ ^/ ]] && BYRON_GENESIS_JSON="$(dirname "${CONFIG}")/${BYRON_GENESIS_JSON}"
+  [[ ! -f "${BYRON_GENESIS_JSON}" ]] && echo "Byron genesis file not found: ${BYRON_GENESIS_JSON}" && return 1
+fi
+
+[[ -z ${BLOCKLOG_DIR} ]] && BLOCKLOG_DIR="${CNODE_HOME}/guild-db/blocklog"
+BLOCKLOG_DB="${BLOCKLOG_DIR}/blocklog.db"
+[[ -z ${BLOCKLOG_TZ} ]] && BLOCKLOG_TZ="UTC"
+
+CNODE_PID=$(pgrep -fn "[c]ardano-node*.*--port ${CNODE_PORT}")
+
+PROTOCOL=$(jq -r .Protocol "${CONFIG}")
+NETWORKID=$(jq -r .networkId ${GENESIS_JSON})
+MAGIC=$(jq -r .protocolMagicId < ${GENESIS_JSON})
+NWMAGIC=$(jq -r .networkMagic < ${GENESIS_JSON})
+[[ "${PROTOCOL}" = "Cardano" ]] && PROTOCOL_IDENTIFIER="--cardano-mode" || PROTOCOL_IDENTIFIER="--shelley-mode"
+if [[ "${NWMAGIC}" = "764824073" ]]; then
+  NETWORK_IDENTIFIER="--mainnet"
+  NETWORK_NAME="Mainnet"
+else
+  NETWORK_IDENTIFIER="--testnet-magic ${NWMAGIC}"
+  [[ "${NWMAGIC}" = "1097911063" ]] && NETWORK_NAME="Testnet" || NETWORK_NAME="Custom"
+fi
+
+PROT_PARAMS="$(${CCLI} shelley query protocol-parameters ${PROTOCOL_IDENTIFIER} ${NETWORK_IDENTIFIER} 2>&1)"
+if [[ -n "${PROT_PARAMS}" ]] && ! DECENTRALISATION=$(jq -er .decentralisationParam <<< ${PROT_PARAMS} 2>/dev/null); then DECENTRALISATION=0.5; fi
+
+SHELLEY_GENESIS_START_SEC=$(date --date="$(jq -r .systemStart "${GENESIS_JSON}")" +%s)
+EPOCH_LENGTH=$(jq -r .epochLength "${GENESIS_JSON}")
+SLOT_LENGTH=$(jq -r .slotLength "${GENESIS_JSON}")
+ACTIVE_SLOTS_COEFF=$(jq -r .activeSlotsCoeff "${GENESIS_JSON}")
+SLOTS_PER_KES_PERIOD=$(jq -r .slotsPerKESPeriod "${GENESIS_JSON}")
+MAX_KES_EVOLUTIONS=$(jq -r .maxKESEvolutions "${GENESIS_JSON}")
+if [[ "${PROTOCOL_IDENTIFIER}" = "--cardano-mode" ]]; then
+  BYRON_GENESIS_START_SEC=$(jq -r .startTime "${BYRON_GENESIS_JSON}")
+  BYRON_K=$(jq -r .protocolConsts.k "${BYRON_GENESIS_JSON}")
+  BYRON_SLOT_LENGTH=$(( $(jq -r .blockVersionData.slotDuration "${BYRON_GENESIS_JSON}") / 1000 ))
+  BYRON_EPOCH_LENGTH=$(( 10 * BYRON_K ))
+fi
+
+FG_BLACK='\e[30m'
+FG_RED='\e[31m'
+FG_GREEN='\e[32m'
+FG_YELLOW='\e[33m'
+FG_BLUE='\e[34m'
+FG_MAGENTA='\e[35m'
+FG_CYAN='\e[36m'
+FG_WHITE='\e[97m'
+STANDOUT='\e[7m'
+BOLD='\e[1m'
+NC='\e[0m'
+
+return 0
