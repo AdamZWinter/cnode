@@ -233,7 +233,10 @@ if grep -q "${CNODE_VNAME}_HOME" "${HOME}"/.bashrc; then
   echo "Environment Variable already set up!"
 else
   echo "Setting up Environment Variable"
+  echo "export PATH=/root/.local/bin:$PATH" >> "${HOME}"/.bashrc
   echo "export ${CNODE_VNAME}_HOME=${CNODE_HOME}" >> "${HOME}"/.bashrc
+  echo "export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH" >> "${HOME}"/.bashrc
+  echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> "${HOME}"/.bashrc
   # shellcheck source=/dev/null
   . "${HOME}/".bashrc
 fi
