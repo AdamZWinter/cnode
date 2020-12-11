@@ -8,7 +8,7 @@
 
 #CCLI="${HOME}/.cabal/bin/cardano-cli"                  # Override automatic detection of path to cardano-cli executable
 #CNCLI="${HOME}/.cargo/bin/cncli"                       # Override automatic detection of path to cncli executable (https://github.com/AndrewWestberg/cncli)
-#CNODE_HOME="/home/ec2-user/cnode"                        # Override default CNODE_HOME path (defaults to /home/ec2-user/cnode)
+CNODE_HOME="/root/cnode"                        # Override default CNODE_HOME path (defaults to /home/ec2-user/cnode)
 CNODE_PORT=3001                                         # Set node port
 #CONFIG="${CNODE_HOME}/files/config.json"               # Override automatic detection of node config path
 #SOCKET="${CNODE_HOME}/sockets/node0.socket"            # Override automatic detection of path to socket
