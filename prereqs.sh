@@ -17,7 +17,7 @@ WANT_BUILD_DEPS='N'    # Skip installing OS level dependencies (Default: will ch
 CNODE_NAME='cnode'     # Alternate name for top level folder, non alpha-numeric chars will be replaced with underscore (Default: cnode)
 #CURL_TIMEOUT=60        # Maximum time in seconds that you allow the file download operation to take before aborting (Default: 60s)
 #UPDATE_CHECK='Y'       # Check if there is an updated version of prereqs.sh script to download
-SUDO='Y'               # Used by docker builds to disable sudo, leave unchanged if unsure.
+SUDO='N'               # Used by docker builds to disable sudo, leave unchanged if unsure.
 
 ######################################
 # Do NOT modify code below           #
