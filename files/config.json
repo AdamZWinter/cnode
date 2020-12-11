@@ -1,7 +1,7 @@
 {
   "ApplicationName": "cardano-sl",
   "ApplicationVersion": 1,
-  "ByronGenesisFile": "/home/ec2-user/cnode/files/byron-genesis.json",
+  "ByronGenesisFile": "/root/cnode/files/byron-genesis.json",
   "ByronGenesisHash": "5f20df933584822601f9e3f8c024eb5eb252fe8cefb24d1317dc3d432e940ebb",
   "LastKnownBlockVersion-Alt": 0,
   "LastKnownBlockVersion-Major": 2,
@@ -9,7 +9,7 @@
   "MaxKnownMajorProtocolVersion": 2,
   "Protocol": "Cardano",
   "RequiresNetworkMagic": "RequiresNoMagic",
-  "ShelleyGenesisFile": "/home/ec2-user/cnode/files/genesis.json",
+  "ShelleyGenesisFile": "/root/cnode/files/genesis.json",
   "ShelleyGenesisHash": "1a3be38bcbb7911969283716ad7aa550250226b76a61fc51cc9a9a35d9276d81",
   "bfcMaxConcurrencyDeadline": 2,
   "TraceBlockFetchClient": true,
@@ -48,7 +48,7 @@
   "defaultScribes": [
     [
       "FileSK",
-      "/home/ec2-user/cnode/logs/node0.json"
+      "/root/cnode/logs/node0.json"
     ]
   ],
   "hasEKG": 12788,
@@ -150,12 +150,12 @@
   "setupScribes": [
     {
       "scKind": "FileSK",
-      "scName": "/home/ec2-user/cnode/logs/node0.json",
+      "scName": "/root/cnode/logs/node0.json",
       "scFormat": "ScJson",
       "scRotation": null
     }
   ],
-  "SocketPath": "/home/ec2-user/cnode/sockets/node0.socket",
+  "SocketPath": "/root/cnode/sockets/node0.socket",
   "NetworkName": "mainnet",
   "EnableLogging": true,
   "EnableLogMetrics": false
