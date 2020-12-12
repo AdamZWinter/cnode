@@ -51,7 +51,10 @@
       "/root/cnode/logs/node0.json"
     ]
   ],
-  "hasEKG": 12788,
+  "hasEKG": [
+    "0.0.0.0",
+    12788
+  ],
   "hasPrometheus": [
     "127.0.0.1",
     12798
